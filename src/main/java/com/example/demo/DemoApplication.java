@@ -4,7 +4,6 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLObject;
 import com.alibaba.druid.sql.ast.SQLStatement;
-import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.statement.SQLColumnDefinition;
 import com.alibaba.druid.sql.ast.statement.SQLSelectOrderByItem;
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
@@ -12,14 +11,12 @@ import com.alibaba.druid.sql.ast.statement.SQLTableElement;
 import com.alibaba.druid.sql.dialect.mysql.ast.MySqlKey;
 import com.alibaba.druid.sql.dialect.mysql.ast.MySqlPrimaryKey;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlCreateTableStatement;
-import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlStatement;
-import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlASTVisitor;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlSchemaStatVisitor;
 import com.alibaba.druid.sql.repository.SchemaRepository;
-import com.alibaba.druid.sql.visitor.SQLASTOutputVisitor;
-import com.alibaba.druid.sql.visitor.SQLASTVisitor;
-import com.alibaba.druid.stat.TableStat;
 import com.alibaba.druid.util.JdbcConstants;
+import com.alibaba.fastjson.JSONArray;
+import com.bumao.model.table2entry.ToEntry;
+import com.bumao.model.table2entry.domain.TableEntryVo;
 import com.example.demo.utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +25,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +37,33 @@ public class DemoApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(DemoApplication.class, args);
 		System.out.println("Bumao started.");
+	}
+
+	@GetMapping("/h")
+	public String h() {
+		String sql = "CREATE TABLE `card` (\n" +
+				"  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'PK',\n" +
+				"  `batch_id` int(11) NOT NULL COMMENT '所属批次ID',\n" +
+				"  `denomination` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '面额',\n" +
+				"  `card_no` varchar(20) NOT NULL COMMENT '实体卡号',\n" +
+				"  `card_pass` varchar(20) NOT NULL COMMENT '实体密码',\n" +
+				"  `status` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT '状态，0=未核销 1=已核销',\n" +
+				"  `active_time` datetime DEFAULT NULL COMMENT '核销核销时间',\n" +
+				"  `active_userid` varchar(32) DEFAULT NULL COMMENT '核销用户ID',\n" +
+				"  `active_mobile` varchar(20) DEFAULT NULL COMMENT '核销时用户的手机号码',\n" +
+				"  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',\n" +
+				"  `stop_time` datetime NOT NULL COMMENT '结束核销时间',\n" +
+				"  `active_openid` varchar(64) DEFAULT NULL COMMENT '用户openid',\n" +
+				"  PRIMARY KEY (`id`) USING BTREE,\n" +
+				"  KEY `batch_id` (`batch_id`) USING BTREE,\n" +
+				"  KEY `status` (`status`) USING BTREE\n" +
+				") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='卡券批次表';" +
+				"select * from card;";
+		ToEntry toEntry = new ToEntry();
+		List<TableEntryVo> tableEntryVos = toEntry.getEntry(sql);
+		log.info("tableEntryVos={}", JSONArray.toJSON(tableEntryVos));
+
+		return "a";
 	}
 
 	@GetMapping("/hello")
@@ -85,12 +108,12 @@ public class DemoApplication {
 				log.info("{} 未知的stmt类型",i);
 				log.info("stmt.getClass()={}",stmt.getClass());
 			}
-//			MySqlSchemaStatVisitor visitor = new MySqlSchemaStatVisitor();
+			MySqlSchemaStatVisitor visitor = new MySqlSchemaStatVisitor();
 //			stmt.accept(visitor);
 //			//获取表名称
 ////			System.out.println("Tables : " + visitor.getCurrentTable());
 //			//获取操作方法名称,依赖于表名称
-//			System.out.println("Manipulation : " + visitor.getTables());
+			System.out.println("Manipulation : " + visitor.getTables());
 //			//获取字段名称
 //			System.out.println("fields : " + visitor.getColumns());
 		}
