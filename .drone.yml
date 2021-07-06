@@ -1,0 +1,65 @@
+# drone 本地构建
+kind: pipeline
+type: docker
+name: MyHelloWorld
+
+# drone构建步骤
+steps:
+  # 1.maven打包
+  - name: maven compile
+    pull: if-not-exists
+    image: maven:ibmjava-alpine
+    volumes:
+      # maven构建缓存
+      - name: cache
+        path: /root/.m2
+      # 挂载宿主机的目录
+      - name: data
+        path: /home
+    commands:
+      # 开始打包maven工程
+      - ls
+      #      - cd springboot-helloworld
+      - mvn clean package -Dmaven.test.skip=true
+      # 将打包后的文件复制到宿主机映射目录
+      #- cp target/*.jar /home
+      #- cp Dockerfile /home
+#    when:
+#      branch: master
+#      event: [ push ]
+  # 2
+  - name: docker
+    image: plugins/docker
+    settings:
+      username: admin
+      password: Harbor12345
+      registry: "192.168.254.97:10443"
+      #是否是不安全仓储，一般来说http协议的地址要设置为true
+      insecure: true
+      repo: mytest/springbootdemo
+      tags: latest
+      build_args:
+        - JAR_FILE: "*.jar"
+#    when:
+#        branch: master
+#        event: [ push ]
+
+
+# 挂载的主机卷，可以映射到docker容器中
+volumes:
+  # maven构建缓存
+  - name: cache
+    host:
+      # path: /tmp/cache/.m2
+      path: /dockerdata/drone/root/.m2
+  # maven构建后与宿主机通信的共享目录
+  - name: data
+    host:
+      path: /dockerdata/drone//home
+
+# drone执行触发器
+trigger:
+  branch:
+    - master
+  enent:
+    - push
